@@ -13,7 +13,7 @@ CONV1_SIZE = 5
 CONV2_DEEP = 64
 CONV2_SIZE = 5
 
-FC_SIZE = 512
+FC_SIZE = 1024
 
 
 def inference(input_tensor, train, regularizer):
@@ -43,7 +43,7 @@ def inference(input_tensor, train, regularizer):
 
     nodes = pool_shape[1] * pool_shape[2] * pool_shape[3]
 
-    reshaped = tf.reshape(pool2, [pool_shape[0], nodes])
+    reshaped = tf.reshape(pool2, [-1, nodes])
 
     with tf.variable_scope('layer5-fc1'):
         fc1_weights = tf.get_variable("weight", [nodes, FC_SIZE],
@@ -63,6 +63,6 @@ def inference(input_tensor, train, regularizer):
             tf.add_to_collection('losses', regularizer(fc2_weights))
         fc2_biases = tf.get_variable("bias", [NUM_LABELS], initializer=tf.constant_initializer(0.1))
 
-        logit = tf.matmul(fc1, fc2_weights) + fc2_biases
+        logit = tf.nn.softmax(tf.matmul(fc1, fc2_weights) + fc2_biases)
 
     return logit
