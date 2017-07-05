@@ -1,7 +1,7 @@
 import time
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
-
+import numpy as np
 from cnn import cnn_mnist_inference
 from cnn import mnist_train
 
@@ -10,13 +10,21 @@ EVAL_INTERVAL_SECS = 10
 
 def evaluate(mnist):
     with tf.Graph().as_default() as g:
-        x = tf.placeholder(tf.float32, [None, cnn_mnist_inference.IMAGE_SIZE], name='x-input')
+        x = tf.placeholder(tf.float32,
+                           [5000, cnn_mnist_inference.IMAGE_SIZE, cnn_mnist_inference.IMAGE_SIZE,
+                            cnn_mnist_inference.NUM_CHANNELS], name='x-input')
         y_ = tf.placeholder(tf.float32, [None, cnn_mnist_inference.NUM_LABELS], name='y-input')
-        validate_feed = {x: mnist.validation.images, y_: mnist.validation.labels}
+        # x = tf.placeholder(tf.float32, [None, cnn_mnist_inference.IMAGE_SIZE], name='x-input')
+        # y_ = tf.placeholder(tf.float32, [None, cnn_mnist_inference.NUM_LABELS], name='y-input')
+        xs = mnist.validation.images
+        ys = mnist.validation.labels
+        reshaped_xs = np.reshape(xs, (5000, cnn_mnist_inference.IMAGE_SIZE, cnn_mnist_inference.IMAGE_SIZE,
+                                      cnn_mnist_inference.NUM_CHANNELS))
+        validate_feed = {x: reshaped_xs, y_: ys}
+        regularizer = tf.contrib.layers.l2_regularizer(0.0001)
+        y = cnn_mnist_inference.inference(x, None, regularizer)
 
-        y = cnn_mnist_inference.inference(x, None)
-
-        correct_prediction = tf.equal(tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1)))
+        correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         variable_averages = tf.train.ExponentialMovingAverage(mnist_train.MOVING_AVERAGE_DECAY)
@@ -31,7 +39,7 @@ def evaluate(mnist):
 
                     global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
                     accuracy_score = sess.run(accuracy, feed_dict=validate_feed)
-                    print("After %s training step(s), validation accuracy = %g" & (global_step, accuracy_score))
+                    print("After %s training step(s), validation accuracy = %g" % (global_step, accuracy_score))
                 else:
                     print('No checkpoint file found')
                     return
@@ -44,4 +52,4 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    tf.app().run()
+    tf.app.run()

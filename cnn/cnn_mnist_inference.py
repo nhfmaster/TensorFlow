@@ -29,11 +29,11 @@ def inference(input_tensor, train, regularizer):
             pool1 = tf.nn.max_pool(relu1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
     with tf.variable_scope('layer3-conv2'):
-        conv2_weights = tf.get_variable("weight", [CONV2_SIZE, CONV2_SIZE, NUM_CHANNELS, CONV2_DEEP],
+        conv2_weights = tf.get_variable("weight", [CONV2_SIZE, CONV2_SIZE, CONV1_DEEP, CONV2_DEEP],
                                         initializer=tf.truncated_normal_initializer(stddev=0.1))
         conv2_biases = tf.get_variable("bias", [CONV2_DEEP], initializer=tf.constant_initializer(0.0))
 
-        conv2 = tf.nn.conv2d(input_tensor, conv2_weights, strides=[1, 1, 1, 1], padding='SAME')
+        conv2 = tf.nn.conv2d(pool1, conv2_weights, strides=[1, 1, 1, 1], padding='SAME')
         relu2 = tf.nn.relu(tf.nn.bias_add(conv2, conv2_biases))
 
         with tf.name_scope('layer4-pool2'):
